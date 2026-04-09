@@ -1,380 +1,403 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { BookOpen, Feather, Heart, Scroll, Clock, GitBranch, Compass, Map, Flame, Star } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { BookOpen, Feather, Heart, Scroll, Clock, GitBranch, Compass, Map, Flame, Star, Zap } from "lucide-react";
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-});
+const ease = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-function Rule({
-  icon: Icon,
-  color,
-  title,
-  body,
-  delay,
-}: {
-  icon: React.ElementType;
-  color: string;
-  title: string;
-  body: string;
-  delay: number;
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return { ref, inView };
+}
+
+function RevealDiv({ children, delay = 0, className = "", style = {} }: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+  style?: React.CSSProperties;
 }) {
+  const { ref, inView } = useReveal();
   return (
-    <motion.div {...fadeUp(delay)} className="flex gap-4">
-      <div
-        className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5"
-        style={{ background: color + "22", border: `1.5px solid ${color}44` }}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 32 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease }}
+      className={className}
+      style={style}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function RuleCard({ icon: Icon, color, title, body, delay }: {
+  icon: React.ElementType; color: string; title: string; body: string; delay: number;
+}) {
+  const { ref, inView } = useReveal();
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: -24 }}
+      animate={inView ? { opacity: 1, x: 0 } : {}}
+      transition={{ duration: 0.6, delay, ease }}
+      whileHover={{ scale: 1.015, x: 4 }}
+      style={{
+        display: "flex", gap: 18, padding: "20px 24px", borderRadius: 20,
+        background: "rgba(255,255,255,0.03)",
+        border: `1px solid ${color}25`,
+        backdropFilter: "blur(10px)",
+        boxShadow: `0 0 0 1px ${color}10, inset 0 1px 0 rgba(255,255,255,0.04)`,
+        transition: "box-shadow 0.3s",
+      }}
+      onHoverStart={e => {
+        (e.currentTarget as HTMLElement).style.boxShadow = `0 0 32px ${color}20, 0 0 0 1px ${color}30, inset 0 1px 0 rgba(255,255,255,0.06)`;
+      }}
+      onHoverEnd={e => {
+        (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 1px ${color}10, inset 0 1px 0 rgba(255,255,255,0.04)`;
+      }}
+    >
+      <motion.div
+        whileHover={{ rotate: [0, -10, 10, 0], scale: 1.15 }}
+        transition={{ duration: 0.4 }}
+        style={{
+          width: 44, height: 44, borderRadius: 16, flexShrink: 0, marginTop: 2,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: `${color}15`, border: `1px solid ${color}30`,
+          boxShadow: `0 0 20px ${color}20`,
+        }}
       >
-        <Icon size={16} style={{ color }} />
-      </div>
+        <Icon size={18} style={{ color }} />
+      </motion.div>
       <div>
-        <h3 className="text-sm font-bold text-[#1a1530] mb-1">{title}</h3>
-        <p className="text-sm text-[#6b6080] leading-relaxed">{body}</p>
+        <h3 style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.92)", marginBottom: 6 }}>{title}</h3>
+        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.75 }}>{body}</p>
       </div>
     </motion.div>
   );
 }
 
-function Lore({
-  number,
-  text,
-  delay,
-}: {
-  number: string;
-  text: string;
-  delay: number;
-}) {
+function LoreCard({ number, text, delay }: { number: string; text: string; delay: number }) {
+  const { ref, inView } = useReveal();
   return (
-    <motion.div {...fadeUp(delay)} className="flex gap-4 items-start">
-      <span
-        className="text-2xl font-black flex-shrink-0 leading-none"
-        style={{
-          fontFamily: "var(--font-lora), Georgia, serif",
-          color: "#ff6b35",
-          opacity: 0.35,
-        }}
-      >
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease }}
+      style={{ display: "flex", gap: 20, alignItems: "flex-start" }}
+    >
+      <span style={{
+        fontSize: 48, fontWeight: 900, flexShrink: 0, lineHeight: 1,
+        fontFamily: "var(--font-lora), Georgia, serif",
+        background: "linear-gradient(135deg, #ff6b35, #f59e0b)",
+        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        opacity: 0.6,
+      }}>
         {number}
       </span>
-      <p
-        className="text-[15px] leading-[1.9] text-[#2d2540]"
-        style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
-      >
+      <p style={{
+        fontSize: 15, lineHeight: 1.9, paddingTop: 8,
+        color: "rgba(255,255,255,0.7)",
+        fontFamily: "var(--font-lora), Georgia, serif",
+      }}>
         {text}
       </p>
     </motion.div>
   );
 }
 
+function NavCard({ label, desc, delay }: { label: string; desc: string; delay: number }) {
+  const { ref, inView } = useReveal();
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={inView ? { opacity: 1, scale: 1 } : {}}
+      transition={{ duration: 0.5, delay, ease }}
+      whileHover={{ scale: 1.02, y: -2 }}
+      style={{
+        display: "flex", gap: 14, alignItems: "flex-start",
+        padding: "16px 20px", borderRadius: 18,
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+        cursor: "default",
+      }}
+    >
+      <span style={{
+        fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 999, flexShrink: 0, marginTop: 2,
+        background: "rgba(255,107,53,0.15)", color: "#ff6b35",
+        border: "1px solid rgba(255,107,53,0.25)", letterSpacing: "0.03em",
+      }}>
+        {label}
+      </span>
+      <p style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.65 }}>{desc}</p>
+    </motion.div>
+  );
+}
+
+// Floating particles in hero
+const PARTICLES = Array.from({ length: 60 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  size: Math.random() * 2.5 + 0.5,
+  duration: Math.random() * 5 + 3,
+  delay: Math.random() * 4,
+  opacity: Math.random() * 0.5 + 0.08,
+}));
+
 export default function AboutPage() {
   return (
-    <div className="min-h-screen" style={{ background: "#f7f3e9" }}>
-      {/* Nav */}
-      <nav
-        className="flex items-center justify-between px-5 py-2.5 sticky top-0 z-20"
-        style={{
-          background: "#ffffff",
-          borderBottom: "1.5px solid #e0d9c8",
-          boxShadow: "0 1px 8px rgba(0,0,0,0.04)",
-        }}
-      >
-        <Link href="/" className="flex items-center gap-2 group">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "#fff4ee", border: "1.5px solid #ffd5c0" }}
-          >
-            <BookOpen size={14} className="text-[#ff6b35]" />
+    <div style={{ minHeight: "100vh", background: "#060410" }}>
+
+      {/* ── Nav ── */}
+      <nav style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 20px", position: "sticky", top: 0, zIndex: 20,
+        background: "rgba(6,4,16,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4)",
+      }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+          <div style={{ width: 32, height: 32, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,107,53,0.15)", border: "1px solid rgba(255,107,53,0.3)" }}>
+            <BookOpen size={14} style={{ color: "#ff6b35" }} />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-[#1a1530] leading-none group-hover:text-[#ff6b35] transition-colors">
-              One-Sentence <span className="text-[#ff6b35]">MMO</span>
-            </h1>
-            <p className="text-[9px] text-[#c8bfa8] leading-none mt-0.5">
-              A living story · one voice at a time
-            </p>
+            <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1, background: "linear-gradient(135deg,#ff6b35,#f59e0b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              One-Sentence MMO
+            </div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>A living story · one voice at a time</div>
           </div>
         </Link>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href="/narrator"
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all hover:shadow-sm"
-            style={{ background: "#faf8f4", color: "#5a5070", border: "1.5px solid #e0d9c8" }}
-          >
-            <Scroll size={12} className="text-[#f59e0b]" />
-            Chronicle
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <Link href="/narrator" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 12, textDecoration: "none", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <Scroll size={11} style={{ color: "#f59e0b" }} /> Chronicle
           </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
-            style={{
-              background: "linear-gradient(135deg, #ff6b35, #f59e0b)",
-              color: "#fff",
-              boxShadow: "0 3px 12px rgba(255,107,53,0.35)",
-            }}
-          >
-            <Feather size={12} />
-            Enter the World
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 12, textDecoration: "none", background: "linear-gradient(135deg,#ff6b35,#f59e0b)", color: "#fff", boxShadow: "0 3px 16px rgba(255,107,53,0.4)" }}>
+            <Feather size={11} /> Enter the World
           </Link>
         </div>
       </nav>
 
-      {/* Hero */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          background: "linear-gradient(160deg, #1a1530 0%, #2d1a0a 60%, #3d2210 100%)",
-          minHeight: "480px",
-        }}
-      >
-        {/* Starfield dots */}
-        {Array.from({ length: 48 }).map((_, i) => (
+      {/* ── Hero ── */}
+      <div style={{ position: "relative", overflow: "hidden", minHeight: 560, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Particles */}
+        {PARTICLES.map(p => (
           <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: Math.random() * 2 + 1,
-              height: Math.random() * 2 + 1,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              background: "#fff",
-              opacity: Math.random() * 0.5 + 0.1,
-            }}
-            animate={{ opacity: [null, Math.random() * 0.6 + 0.1, null] as never }}
-            transition={{ duration: Math.random() * 4 + 2, repeat: Infinity, ease: "easeInOut" }}
+            key={p.id}
+            style={{ position: "absolute", left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, borderRadius: "50%", background: "#fff", opacity: p.opacity, pointerEvents: "none" }}
+            animate={{ opacity: [p.opacity, p.opacity * 3, p.opacity], y: [0, -12, 0] }}
+            transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
           />
         ))}
 
-        {/* Warm glow */}
-        <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2"
-          style={{
-            width: 600,
-            height: 300,
-            background: "radial-gradient(ellipse, rgba(255,107,53,0.18) 0%, transparent 70%)",
-          }}
-        />
+        {/* Aurora blobs */}
+        <div className="aurora-a" style={{ position: "absolute", width: "65vw", height: "55vh", top: "-15vh", left: "-10vw", background: "radial-gradient(ellipse, rgba(255,107,53,0.12) 0%, transparent 65%)", filter: "blur(70px)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div className="aurora-b" style={{ position: "absolute", width: "55vw", height: "50vh", bottom: "-15vh", right: "-10vw", background: "radial-gradient(ellipse, rgba(139,92,246,0.1) 0%, transparent 65%)", filter: "blur(70px)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div className="aurora-c" style={{ position: "absolute", width: "40vw", height: "35vh", top: "40%", left: "30%", background: "radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, transparent 65%)", filter: "blur(60px)", borderRadius: "50%", pointerEvents: "none" }} />
 
-        <div className="relative z-10 max-w-3xl mx-auto px-6 py-24 text-center">
-          <motion.div {...fadeUp(0)} className="flex justify-center mb-6">
-            <div
-              className="w-16 h-16 rounded-3xl flex items-center justify-center"
+        <div style={{ position: "relative", zIndex: 10, maxWidth: 760, margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
+          {/* 3D floating icon */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, rotateY: -30 }}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            transition={{ duration: 0.9, ease }}
+            style={{ display: "flex", justifyContent: "center", marginBottom: 32, perspective: 600 }}
+          >
+            <motion.div
+              animate={{ y: [0, -10, 0], rotateZ: [0, 2, -2, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
               style={{
-                background: "rgba(255,107,53,0.15)",
-                border: "1.5px solid rgba(255,107,53,0.35)",
+                width: 80, height: 80, borderRadius: 28,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(255,107,53,0.12)",
+                border: "1px solid rgba(255,107,53,0.3)",
+                boxShadow: "0 0 60px rgba(255,107,53,0.25), 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
               }}
             >
-              <Compass size={28} className="text-[#ff6b35]" />
-            </div>
+              <Compass size={34} style={{ color: "#ff6b35" }} />
+            </motion.div>
           </motion.div>
 
+          {/* Headline */}
           <motion.h1
-            {...fadeUp(0.1)}
-            className="text-5xl font-black mb-4 text-white"
-            style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15, ease }}
+            style={{
+              fontSize: "clamp(36px, 6vw, 64px)", fontWeight: 900, lineHeight: 1.1,
+              fontFamily: "var(--font-lora), Georgia, serif",
+              color: "#fff", marginBottom: 20, letterSpacing: "-0.02em",
+            }}
           >
             Every world needs{" "}
-            <span style={{ color: "#ff6b35" }}>a first word.</span>
+            <span className="shimmer-text">a first word.</span>
           </motion.h1>
 
           <motion.p
-            {...fadeUp(0.2)}
-            className="text-lg text-[#c8a882] leading-relaxed max-w-xl mx-auto"
-            style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.28, ease }}
+            style={{
+              fontSize: 17, lineHeight: 1.8, color: "rgba(255,255,255,0.45)",
+              maxWidth: 560, margin: "0 auto 36px",
+              fontFamily: "var(--font-lora), Georgia, serif",
+            }}
           >
-            One-Sentence MMO is a living, branching story written by strangers — one sentence at a time, forever. There are no characters to level up. No quests to complete. Only the story, and your single line to add to it.
+            A living, branching story written by strangers — one sentence at a time, forever. No characters. No quests. Just the story, and your single line to add.
           </motion.p>
 
-          <motion.div {...fadeUp(0.3)} className="mt-8 flex items-center justify-center gap-4 flex-wrap">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#c8a882]">
-              <Clock size={11} className="text-[#ff6b35]" /> One sentence per hour
-            </div>
-            <div className="w-1 h-1 rounded-full bg-[#4a3a28]" />
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#c8a882]">
-              <GitBranch size={11} className="text-[#ff6b35]" /> Branch any sentence
-            </div>
-            <div className="w-1 h-1 rounded-full bg-[#4a3a28]" />
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#c8a882]">
-              <Star size={11} className="text-[#ff6b35]" /> No accounts ever
-            </div>
+          {/* Stat pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.42, ease }}
+            style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}
+          >
+            {[
+              { icon: Clock, label: "1 sentence / hour", color: "#ff6b35" },
+              { icon: GitBranch, label: "Branch anywhere", color: "#a78bfa" },
+              { icon: Star, label: "No accounts ever", color: "#34d399" },
+            ].map(({ icon: Icon, label, color }) => (
+              <motion.div
+                key={label}
+                whileHover={{ scale: 1.06, y: -2 }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 7,
+                  fontSize: 12, fontWeight: 600,
+                  padding: "8px 16px", borderRadius: 999,
+                  background: `${color}12`, color: "rgba(255,255,255,0.65)",
+                  border: `1px solid ${color}30`,
+                  boxShadow: `0 0 20px ${color}15`,
+                }}
+              >
+                <Icon size={12} style={{ color }} /> {label}
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-2xl mx-auto px-6 py-16 space-y-20">
+      {/* ── Content ── */}
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px 80px" }}>
 
         {/* The Lore */}
-        <section className="space-y-6">
-          <motion.div {...fadeUp(0)}>
-            <div className="flex items-center gap-2 mb-6">
-              <Map size={14} className="text-[#ff6b35]" />
-              <span className="text-xs font-bold uppercase tracking-widest text-[#ff6b35]">The Lore</span>
-            </div>
-          </motion.div>
+        <section style={{ paddingTop: 80, marginBottom: 80 }}>
+          <RevealDiv style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 48 }}>
+            <Map size={14} style={{ color: "#ff6b35" }} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#ff6b35" }}>The Lore</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(255,107,53,0.3), transparent)" }} />
+          </RevealDiv>
 
-          <Lore
-            number="I"
-            delay={0.05}
-            text="Somewhere between here and the edge of imagination lives a story with no author — only contributors. Each line is a door. Behind every door is a world. You hold the key."
-          />
-          <Lore
-            number="II"
-            delay={0.1}
-            text="The story forks. It always has. One sentence might birth ten children, each pulling the world in a different direction. The path with the most hearts becomes the canon — the official record of this world's history."
-          />
-          <Lore
-            number="III"
-            delay={0.15}
-            text="At the close of each day, a town crier reads the canonical path aloud and broadcasts the events to all who gather at the Chronicle. History is written by the voted."
-          />
-        </section>
-
-        {/* Divider */}
-        <div
-          className="h-px w-full"
-          style={{ background: "linear-gradient(90deg, transparent, #e0d9c8, transparent)" }}
-        />
-
-        {/* The Rules */}
-        <section className="space-y-8">
-          <motion.div {...fadeUp(0)}>
-            <div className="flex items-center gap-2 mb-2">
-              <Flame size={14} className="text-[#ff6b35]" />
-              <span className="text-xs font-bold uppercase tracking-widest text-[#ff6b35]">The Rules of the World</span>
-            </div>
-            <p className="text-sm text-[#6b6080]">Simple laws govern this realm. Break them, and your sentence shall not pass.</p>
-          </motion.div>
-
-          <div className="space-y-7">
-            <Rule
-              icon={Clock}
-              color="#ff6b35"
-              title="One sentence per hour"
-              body="Your quill rests after each contribution. Wait one full hour before your voice may speak again. Patience is the first virtue of a good storyteller."
-              delay={0.05}
-            />
-            <Rule
-              icon={Feather}
-              color="#f59e0b"
-              title="20 to 280 characters"
-              body="Too short and you've said nothing. Too long and you've said too much. Every great sentence knows when to stop. End with a period, an exclamation, or a question mark — leave no sentence dangling."
-              delay={0.1}
-            />
-            <Rule
-              icon={GitBranch}
-              color="#6BB8FF"
-              title="Branch from anywhere"
-              body="You don't have to continue the latest thread. Pick any sentence — from the very beginning, from a forgotten branch, from the most obscure corner of the tree — and pull it in a new direction."
-              delay={0.15}
-            />
-            <Rule
-              icon={Heart}
-              color="#FF7EB3"
-              title="Vote for what you love"
-              body="One heart per sentence, per traveller. The sentences with the most hearts shape the canonical path — the story the world remembers. Your vote is your voice when your quill is resting."
-              delay={0.2}
-            />
-            <Rule
-              icon={Star}
-              color="#A8E063"
-              title="No accounts. Ever."
-              body="You arrive as a stranger with a name the world assigns you — part adjective, part creature, all yours. Your identity lives only in your browser. No email. No password. No tracking. Just you and the story."
-              delay={0.25}
-            />
+          <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+            <LoreCard number="I" delay={0} text="Somewhere between here and the edge of imagination lives a story with no author — only contributors. Each line is a door. Behind every door is a world. You hold the key." />
+            <LoreCard number="II" delay={0.08} text="The story forks. It always has. One sentence might birth ten children, each pulling the world in a different direction. The path with the most hearts becomes the canon — the official record of this world's history." />
+            <LoreCard number="III" delay={0.16} text="At the close of each day, a town crier reads the canonical path aloud and broadcasts the events to all who gather at the Chronicle. History is written by the voted." />
           </div>
         </section>
 
         {/* Divider */}
-        <div
-          className="h-px w-full"
-          style={{ background: "linear-gradient(90deg, transparent, #e0d9c8, transparent)" }}
-        />
+        <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)", marginBottom: 80 }} />
 
-        {/* How to navigate */}
-        <section className="space-y-6">
-          <motion.div {...fadeUp(0)}>
-            <div className="flex items-center gap-2 mb-2">
-              <Compass size={14} className="text-[#ff6b35]" />
-              <span className="text-xs font-bold uppercase tracking-widest text-[#ff6b35]">Navigating the World</span>
+        {/* The Rules */}
+        <section style={{ marginBottom: 80 }}>
+          <RevealDiv style={{ marginBottom: 36 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <Flame size={14} style={{ color: "#ff6b35" }} />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#ff6b35" }}>The Rules of the World</span>
+              <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(255,107,53,0.3), transparent)" }} />
             </div>
-          </motion.div>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginLeft: 24 }}>Simple laws govern this realm. Break them, and your sentence shall not pass.</p>
+          </RevealDiv>
 
-          <div className="grid gap-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <RuleCard icon={Clock} color="#ff6b35" title="One sentence per hour" body="Your quill rests after each contribution. Wait one full hour before your voice may speak again. Patience is the first virtue of a good storyteller." delay={0} />
+            <RuleCard icon={Feather} color="#f59e0b" title="20 to 280 characters" body="Too short and you've said nothing. Too long and you've said too much. Every great sentence knows when to stop. End with a period, an exclamation, or a question mark." delay={0.06} />
+            <RuleCard icon={GitBranch} color="#6BB8FF" title="Branch from anywhere" body="Pick any sentence — from the root, from a forgotten branch, from the most obscure corner of the tree — and pull it in a new direction." delay={0.12} />
+            <RuleCard icon={Heart} color="#FF7EB3" title="Vote for what you love" body="One heart per sentence, per traveller. The sentences with the most hearts shape the canonical path — the story the world remembers." delay={0.18} />
+            <RuleCard icon={Star} color="#A8E063" title="No accounts. Ever." body="You arrive as a stranger with a name the world assigns you — part adjective, part creature, all yours. No email. No password. No tracking." delay={0.24} />
+          </div>
+        </section>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)", marginBottom: 80 }} />
+
+        {/* Navigating */}
+        <section style={{ marginBottom: 80 }}>
+          <RevealDiv style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+            <Zap size={14} style={{ color: "#ff6b35" }} />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#ff6b35" }}>Navigating the World</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(255,107,53,0.3), transparent)" }} />
+          </RevealDiv>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
-              { key: "Pan", desc: "Drag the background to move across the story tree." },
-              { key: "Zoom", desc: "Scroll to zoom in on a thread or out to see the whole world." },
-              { key: "Drag nodes", desc: "Each sentence card can be repositioned. Rearrange the world to your liking — the branches follow." },
-              { key: "Hover a card", desc: "Reveal the Like and Continue buttons. They disappear when you move away." },
-              { key: "Recenter", desc: "Lost? Hit the Recenter button in the bottom-right of the canvas to return to the root." },
-              { key: "Chronicle", desc: "Visit the Chronicle page to read the AI narrator's daily bulletin on the canonical story." },
-            ].map(({ key, desc }, i) => (
-              <motion.div
-                key={key}
-                {...fadeUp(i * 0.05)}
-                className="flex gap-3 items-start p-4 rounded-2xl"
-                style={{ background: "#fff", border: "1.5px solid #e0d9c8" }}
-              >
-                <span
-                  className="text-[11px] font-black px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5"
-                  style={{ background: "#fff4ee", color: "#ff6b35", border: "1px solid #ffd5c0" }}
-                >
-                  {key}
-                </span>
-                <p className="text-sm text-[#5a5070] leading-relaxed">{desc}</p>
-              </motion.div>
+              { label: "Pan", desc: "Drag the background to move across the story tree." },
+              { label: "Zoom", desc: "Scroll to zoom in on a thread or out to the whole world." },
+              { label: "Drag nodes", desc: "Reposition any card — the branches follow live." },
+              { label: "Hover", desc: "Reveal Like and Continue buttons on any card." },
+              { label: "Recenter", desc: "Lost? Hit Recenter bottom-right to return to the root." },
+              { label: "Chronicle", desc: "Daily AI bulletin on the canonical story path." },
+            ].map(({ label, desc }, i) => (
+              <NavCard key={label} label={label} desc={desc} delay={i * 0.06} />
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <motion.div
-          {...fadeUp(0)}
-          className="text-center py-12 rounded-3xl space-y-5"
-          style={{
-            background: "linear-gradient(160deg, #1a1530 0%, #2d1a0a 100%)",
-            border: "1.5px solid rgba(255,107,53,0.2)",
-          }}
-        >
-          <div className="flex justify-center">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center"
-              style={{ background: "rgba(255,107,53,0.15)", border: "1.5px solid rgba(255,107,53,0.3)" }}
-            >
-              <Feather size={20} className="text-[#ff6b35]" />
-            </div>
-          </div>
-          <div>
-            <h2
-              className="text-2xl font-black text-white mb-2"
-              style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
-            >
-              The story is waiting.
-            </h2>
-            <p className="text-sm text-[#c8a882]">Your sentence could change everything.</p>
-          </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-bold px-6 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95"
+        <RevealDiv>
+          <motion.div
+            whileHover={{ scale: 1.01 }}
             style={{
-              background: "linear-gradient(135deg, #ff6b35, #f59e0b)",
-              color: "#fff",
-              boxShadow: "0 6px 24px rgba(255,107,53,0.45)",
+              position: "relative", overflow: "hidden",
+              textAlign: "center", padding: "56px 40px", borderRadius: 32,
+              background: "rgba(255,255,255,0.025)",
+              border: "1px solid rgba(255,107,53,0.2)",
+              boxShadow: "0 0 80px rgba(255,107,53,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
-            <Compass size={14} />
-            Enter the World
-          </Link>
-        </motion.div>
+            {/* Glow blobs */}
+            <div style={{ position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)", width: 300, height: 200, background: "radial-gradient(ellipse, rgba(255,107,53,0.15) 0%, transparent 70%)", filter: "blur(40px)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: -40, left: "20%", width: 200, height: 150, background: "radial-gradient(ellipse, rgba(139,92,246,0.1) 0%, transparent 70%)", filter: "blur(40px)", pointerEvents: "none" }} />
 
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <motion.div
+                animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}
+              >
+                <div style={{ width: 56, height: 56, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,107,53,0.15)", border: "1px solid rgba(255,107,53,0.3)", boxShadow: "0 0 40px rgba(255,107,53,0.3)" }}>
+                  <Feather size={22} style={{ color: "#ff6b35" }} />
+                </div>
+              </motion.div>
+
+              <h2 style={{ fontSize: 32, fontWeight: 900, color: "#fff", marginBottom: 10, fontFamily: "var(--font-lora), Georgia, serif", letterSpacing: "-0.02em" }}>
+                The story is waiting.
+              </h2>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 28, fontFamily: "var(--font-lora)" }}>
+                Your sentence could change everything.
+              </p>
+
+              <motion.div style={{ display: "flex", justifyContent: "center" }}>
+                <Link
+                  href="/"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 16, textDecoration: "none", background: "linear-gradient(135deg, #ff6b35, #f59e0b)", color: "#fff", boxShadow: "0 8px 32px rgba(255,107,53,0.5)" }}
+                >
+                  <Compass size={15} /> Enter the World
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        </RevealDiv>
       </div>
 
       {/* Footer */}
-      <div className="text-center py-8 text-[10px] text-[#c8bfa8]">
+      <div style={{ textAlign: "center", padding: "24px", fontSize: 10, color: "rgba(255,255,255,0.15)", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
         One-Sentence MMO · Built with curiosity · A story never truly ends
       </div>
     </div>

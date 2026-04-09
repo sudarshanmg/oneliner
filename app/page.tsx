@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Scroll, Feather, BookOpen, Sparkles, Compass } from "lucide-react";
 import { WorldCanvas } from "@/components/canvas/WorldCanvas";
-import { BranchPanel } from "@/components/panel/BranchPanel";
+import { WriteModal } from "@/components/panel/WriteModal";
 import { Identicon } from "@/components/identity/Identicon";
 import { useIdentity } from "@/hooks/useIdentity";
 import { useTree } from "@/hooks/useTree";
@@ -25,6 +25,7 @@ export default function WorldPage() {
   const identity = useIdentity();
   const { root, nodeMap, loading, addSentence, updateVotes } = useTree();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [writeTargetId, setWriteTargetId] = useState<string | null>(null);
   const [newNodeIds, setNewNodeIds] = useState<Set<string>>(new Set());
   const [centerKey, setCenterKey] = useState(0);
 
@@ -76,6 +77,7 @@ export default function WorldPage() {
     addSentence(s);
     markNew(s.id);
     setSelectedId(s.id);
+    setWriteTargetId(null);
   }, [doSubmit, addSentence, markNew]);
 
   const handleBeginWorld = useCallback(async () => {
@@ -382,7 +384,7 @@ export default function WorldPage() {
                 newNodeIds={newNodeIds}
                 centerKey={centerKey}
                 onSelectNode={setSelectedId}
-                onBranchNode={(id) => setSelectedId(id)}
+                onBranchNode={(id) => { setSelectedId(id); setWriteTargetId(id); }}
                 onVote={handleVote}
               />
             </motion.div>
@@ -390,15 +392,20 @@ export default function WorldPage() {
         </AnimatePresence>
       </div>
 
-      <BranchPanel
-        selectedId={selectedId}
-        nodeMap={nodeMap}
-        identity={identity}
-        cooldown={cooldown}
-        onClose={() => setSelectedId(null)}
-        onSubmit={handleSubmit}
-        onSelectNode={setSelectedId}
-      />
+      <AnimatePresence>
+        {writeTargetId && nodeMap.get(writeTargetId) && (
+          <WriteModal
+            key="write-modal"
+            node={nodeMap.get(writeTargetId)!}
+            nodeMap={nodeMap}
+            identity={identity}
+            cooldown={cooldown}
+            onClose={() => setWriteTargetId(null)}
+            onSubmit={handleSubmit}
+            onSelectNode={(id) => { setSelectedId(id); setWriteTargetId(null); }}
+          />
+        )}
+      </AnimatePresence>
 
       {!loading && !isEmpty && !selectedId && (
         <motion.div
