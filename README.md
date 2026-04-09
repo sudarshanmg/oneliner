@@ -28,7 +28,7 @@ Hover a card to reveal **Like** and **Continue →** buttons. Click Continue to 
 
 | Layer | Tech |
 |---|---|
-| Framework | Next.js 15 (App Router) + TypeScript |
+| Framework | Next.js 16 (App Router) + TypeScript |
 | Database | Supabase (Postgres + Realtime) |
 | Canvas | Framer Motion (pan, zoom, spring animations) |
 | AI narrator | Groq — `llama-3.3-70b-versatile` (free tier) |
