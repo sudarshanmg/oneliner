@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Scroll, Feather, BookOpen, Sparkles } from "lucide-react";
+import { Scroll, Feather, BookOpen, Sparkles, Compass } from "lucide-react";
 import { WorldCanvas } from "@/components/canvas/WorldCanvas";
 import { BranchPanel } from "@/components/panel/BranchPanel";
 import { Identicon } from "@/components/identity/Identicon";
@@ -123,7 +123,7 @@ export default function WorldPage() {
         }}
       >
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+            <Link href="/about" className="flex items-center gap-2 group">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center"
               style={{ background: "#fff4ee", border: "1.5px solid #ffd5c0" }}
@@ -131,14 +131,14 @@ export default function WorldPage() {
               <BookOpen size={14} className="text-[#ff6b35]" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-[#1a1530] leading-none">
+              <h1 className="text-sm font-bold text-[#1a1530] leading-none group-hover:text-[#ff6b35] transition-colors">
                 One-Sentence <span className="text-[#ff6b35]">MMO</span>
               </h1>
               <p className="text-[9px] text-[#c8bfa8] leading-none mt-0.5">
                 A living story · one voice at a time
               </p>
             </div>
-          </div>
+          </Link>
 
           {nodeMap.size > 0 && (
             <div
@@ -167,6 +167,18 @@ export default function WorldPage() {
           >
             <Scroll size={12} className="text-[#f59e0b]" />
             Chronicle
+          </Link>
+          <Link
+            href="/about"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all hover:shadow-sm"
+            style={{
+              background: "#faf8f4",
+              color: "#5a5070",
+              border: "1.5px solid #e0d9c8",
+            }}
+          >
+            <Compass size={12} className="text-[#6BB8FF]" />
+            About
           </Link>
 
           {identity && (
