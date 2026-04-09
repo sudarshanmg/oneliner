@@ -140,15 +140,20 @@ function NavCard({ label, desc, delay }: { label: string; desc: string; delay: n
   );
 }
 
-// Floating particles in hero
+// Deterministic seeded random so SSR and client produce identical values
+function sr(seed: number) {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+}
+
 const PARTICLES = Array.from({ length: 60 }, (_, i) => ({
   id: i,
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: Math.random() * 2.5 + 0.5,
-  duration: Math.random() * 5 + 3,
-  delay: Math.random() * 4,
-  opacity: Math.random() * 0.5 + 0.08,
+  x: sr(i * 7) * 100,
+  y: sr(i * 7 + 1) * 100,
+  size: sr(i * 7 + 2) * 2.5 + 0.5,
+  duration: sr(i * 7 + 3) * 5 + 3,
+  delay: sr(i * 7 + 4) * 4,
+  opacity: sr(i * 7 + 5) * 0.5 + 0.08,
 }));
 
 export default function AboutPage() {
