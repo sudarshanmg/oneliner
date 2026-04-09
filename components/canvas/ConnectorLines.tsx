@@ -14,7 +14,6 @@ function taperingBranch(
   const cx2 = x2;
   const cy2 = (y1 + y2) / 2;
 
-  // Approximate perpendicular at start and end of bezier
   const dxStart = cx1 - x1;
   const dyStart = cy1 - y1;
   const lenStart = Math.sqrt(dxStart * dxStart + dyStart * dyStart) || 1;
@@ -27,7 +26,6 @@ function taperingBranch(
   const pxEnd = -dyEnd / lenEnd;
   const pyEnd = dxEnd / lenEnd;
 
-  // Four corners of the tapered shape
   const lx1 = x1 + pxStart * w1 / 2,  ly1 = y1 + pyStart * w1 / 2;
   const rx1 = x1 - pxStart * w1 / 2,  ry1 = y1 - pyStart * w1 / 2;
   const lx2 = x2 + pxEnd * w2 / 2,    ly2 = y2 + pyEnd * w2 / 2;
@@ -47,9 +45,10 @@ import type { NodePositions } from "./WorldCanvas";
 interface ConnectorLinesProps {
   nodeMap: Map<string, NodeWithPosition>;
   nodePositions: NodePositions;
+  canonicalIds: Set<string>;
 }
 
-export function ConnectorLines({ nodeMap, nodePositions }: ConnectorLinesProps) {
+export function ConnectorLines({ nodeMap, nodePositions, canonicalIds }: ConnectorLinesProps) {
   if (nodeMap.size === 0) return null;
 
   const getPos = (id: string, fallbackX: number, fallbackY: number) =>
@@ -64,15 +63,22 @@ export function ConnectorLines({ nodeMap, nodePositions }: ConnectorLinesProps) 
     maxY = Math.max(maxY, pos.y + NODE_HEIGHT);
   }
 
-  // Count children per node to scale trunk thickness
+  // Count children per node for trunk thickness
   const childCount = new Map<string, number>();
+  // Max votes among siblings for relative intensity
+  const maxSiblingVotes = new Map<string, number>();
+
   for (const node of nodeMap.values()) {
     if (node.parent_id) {
       childCount.set(node.parent_id, (childCount.get(node.parent_id) ?? 0) + 1);
+      const prev = maxSiblingVotes.get(node.parent_id) ?? 0;
+      maxSiblingVotes.set(node.parent_id, Math.max(prev, node.votes));
     }
   }
 
-  const branches: React.ReactNode[] = [];
+  // Draw non-canonical first, canonical on top
+  const regularBranches: React.ReactNode[] = [];
+  const canonicalBranches: React.ReactNode[] = [];
 
   for (const node of nodeMap.values()) {
     if (!node.parent_id) continue;
@@ -82,41 +88,51 @@ export function ConnectorLines({ nodeMap, nodePositions }: ConnectorLinesProps) 
     const parentPos = getPos(parent.id, parent.x, parent.y);
     const childPos = getPos(node.id, node.x, node.y);
 
-    // Start at bottom-center of parent, end at top-center of child (above pin)
     const x1 = parentPos.x + NODE_WIDTH / 2;
     const y1 = parentPos.y + NODE_HEIGHT + 16;
     const x2 = childPos.x + NODE_WIDTH / 2;
     const y2 = childPos.y - 20;
 
-    // Thickness: thicker trunk when parent has many children
     const siblings = childCount.get(node.parent_id) ?? 1;
-    const w1 = Math.min(14, 6 + siblings * 2);
-    const w2 = 3;
+    const isCanonical = canonicalIds.has(node.id) && canonicalIds.has(node.parent_id);
+    const maxVotes = maxSiblingVotes.get(node.parent_id) ?? 0;
+
+    // Thickness: canonical is thicker; also slightly thicker for more-voted non-canonical
+    const baseW1 = Math.min(14, 6 + siblings * 2);
+    const w1 = isCanonical ? Math.min(18, baseW1 + 4) : baseW1;
+    const w2 = isCanonical ? 5 : 3;
 
     const path = taperingBranch(x1, y1, x2, y2, w1, w2);
 
-    // Use a warm brown wood color
-    branches.push(
-      <g key={`${parent.id}-${node.id}`}>
-        {/* Shadow/depth layer */}
-        <path
-          d={path}
-          fill="rgba(0,0,0,0.06)"
-          transform="translate(2,3)"
-        />
-        {/* Main branch */}
-        <path
-          d={path}
-          fill="url(#branchGrad)"
-        />
-        {/* Highlight sheen */}
-        <path
-          d={path}
-          fill="rgba(255,255,255,0.12)"
-          style={{ mixBlendMode: "overlay" }}
-        />
-      </g>
-    );
+    // Opacity for non-canonical: dim if 0 votes, brighter with votes
+    const voteRatio = maxVotes > 0 ? node.votes / maxVotes : 0;
+    const dimOpacity = 0.35 + voteRatio * 0.35; // 0.35 → 0.7
+
+    if (isCanonical) {
+      canonicalBranches.push(
+        <g key={`${parent.id}-${node.id}`}>
+          {/* Glow halo */}
+          <path d={path} fill="rgba(245,158,11,0.25)" filter="url(#canonicalGlow)" />
+          {/* Shadow */}
+          <path d={path} fill="rgba(0,0,0,0.10)" transform="translate(2,4)" />
+          {/* Main golden branch */}
+          <path d={path} fill="url(#canonicalGrad)" />
+          {/* Sheen */}
+          <path d={path} fill="rgba(255,255,255,0.18)" style={{ mixBlendMode: "overlay" }} />
+        </g>
+      );
+    } else {
+      regularBranches.push(
+        <g key={`${parent.id}-${node.id}`} opacity={dimOpacity}>
+          {/* Shadow */}
+          <path d={path} fill="rgba(0,0,0,0.05)" transform="translate(2,3)" />
+          {/* Main brown branch */}
+          <path d={path} fill="url(#branchGrad)" />
+          {/* Sheen */}
+          <path d={path} fill="rgba(255,255,255,0.08)" style={{ mixBlendMode: "overlay" }} />
+        </g>
+      );
+    }
   }
 
   const padding = 200;
@@ -137,14 +153,32 @@ export function ConnectorLines({ nodeMap, nodePositions }: ConnectorLinesProps) 
       }}
     >
       <defs>
+        {/* Regular brown branch */}
         <linearGradient id="branchGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#a0723a" />
           <stop offset="60%" stopColor="#7a5528" />
           <stop offset="100%" stopColor="#5c3d18" />
         </linearGradient>
+
+        {/* Canonical amber/gold branch */}
+        <linearGradient id="canonicalGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f59e0b" />
+          <stop offset="50%" stopColor="#e07b10" />
+          <stop offset="100%" stopColor="#b85a00" />
+        </linearGradient>
+
+        {/* Glow filter for canonical */}
+        <filter id="canonicalGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
       </defs>
+
       <g transform={`translate(${-minX + padding}, ${-minY + padding})`}>
-        {branches}
+        {/* Dim branches under the canonical */}
+        {regularBranches}
+        {/* Canonical path on top, glowing */}
+        {canonicalBranches}
       </g>
     </svg>
   );

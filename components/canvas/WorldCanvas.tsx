@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { SentenceNode, NODE_WIDTH, NODE_HEIGHT } from "./SentenceNode";
 import { ConnectorLines } from "./ConnectorLines";
 import type { NodeWithPosition } from "@/lib/tree";
+import { getCanonicalPath } from "@/lib/tree";
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 2.5;
@@ -141,7 +142,11 @@ export function WorldCanvas({
         }}
       >
         {/* Branches drawn below nodes */}
-        <ConnectorLines nodeMap={nodeMap} nodePositions={nodePositions} />
+        <ConnectorLines
+          nodeMap={nodeMap}
+          nodePositions={nodePositions}
+          canonicalIds={new Set(getCanonicalPath(root).map((n) => n.id))}
+        />
 
         {Array.from(nodeMap.values()).map((node) => {
           const pos = getPosForNode(node.id, node.x, node.y);
