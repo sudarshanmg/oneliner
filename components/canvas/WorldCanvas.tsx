@@ -44,10 +44,8 @@ export function WorldCanvas({
   const canvasDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
-  // Per-node dragged positions (override tree layout)
   const [nodePositions, setNodePositions] = useState<NodePositions>(new Map());
 
-  // Sync new nodes into positions (don't override already-dragged ones)
   useEffect(() => {
     setNodePositions((prev) => {
       const next = new Map(prev);
@@ -84,7 +82,6 @@ export function WorldCanvas({
 
   useEffect(() => { centerOnRoot(); }, [centerKey]); // eslint-disable-line
 
-  // Canvas pan — only if not clicking a node
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("[data-node]")) return;
     canvasDragging.current = true;
@@ -117,15 +114,17 @@ export function WorldCanvas({
     setZoom(newZoom);
   }, []);
 
+  const canonicalIds = new Set(getCanonicalPath(root).map((n) => n.id));
+
   return (
     <div
       ref={containerRef}
       className="w-full h-full overflow-hidden select-none relative"
       style={{
         cursor: canvasDragging.current ? "grabbing" : "default",
-        backgroundColor: "#f7f3e9",
-        backgroundImage: "radial-gradient(circle, #c8bfa820 1.5px, transparent 1.5px)",
-        backgroundSize: "28px 28px",
+        backgroundColor: "#060410",
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)",
+        backgroundSize: "30px 30px",
       }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
@@ -133,6 +132,44 @@ export function WorldCanvas({
       onMouseLeave={onMouseUp}
       onWheel={onWheel}
     >
+      {/* Aurora blobs — fixed, don't move with pan/zoom */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="aurora-a absolute rounded-full"
+          style={{
+            width: "70vw",
+            height: "60vh",
+            top: "-20vh",
+            left: "-15vw",
+            background: "radial-gradient(ellipse, rgba(255,107,53,0.07) 0%, transparent 65%)",
+            filter: "blur(60px)",
+          }}
+        />
+        <div
+          className="aurora-b absolute rounded-full"
+          style={{
+            width: "60vw",
+            height: "55vh",
+            bottom: "-20vh",
+            right: "-10vw",
+            background: "radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 65%)",
+            filter: "blur(60px)",
+          }}
+        />
+        <div
+          className="aurora-c absolute rounded-full"
+          style={{
+            width: "50vw",
+            height: "45vh",
+            top: "35%",
+            left: "25%",
+            background: "radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 65%)",
+            filter: "blur(60px)",
+          }}
+        />
+      </div>
+
+      {/* Panning / zooming world */}
       <div
         style={{
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
@@ -141,11 +178,10 @@ export function WorldCanvas({
           willChange: "transform",
         }}
       >
-        {/* Branches drawn below nodes */}
         <ConnectorLines
           nodeMap={nodeMap}
           nodePositions={nodePositions}
-          canonicalIds={new Set(getCanonicalPath(root).map((n) => n.id))}
+          canonicalIds={canonicalIds}
         />
 
         {Array.from(nodeMap.values()).map((node) => {
@@ -173,14 +209,15 @@ export function WorldCanvas({
       {nodeMap.size > 0 && (
         <motion.button
           onClick={centerOnRoot}
-          whileHover={{ scale: 1.08 }}
+          whileHover={{ scale: 1.08, y: -1 }}
           whileTap={{ scale: 0.94 }}
           className="absolute bottom-5 right-5 flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl"
           style={{
-            background: "#fff",
-            color: "#5a5070",
-            border: "1.5px solid #e0d9c8",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+            background: "rgba(255,255,255,0.06)",
+            color: "rgba(255,255,255,0.7)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            backdropFilter: "blur(16px)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
           }}
         >
           <Crosshair size={13} />

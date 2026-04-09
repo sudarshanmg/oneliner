@@ -4,7 +4,6 @@ import { useState, useCallback } from "react";
 import { Feather, BookOpen, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 import { Identicon } from "@/components/identity/Identicon";
 import { AncestryBreadcrumb } from "./AncestryBreadcrumb";
 import { CooldownTimer } from "./CooldownTimer";
@@ -74,28 +73,35 @@ export function BranchPanel({
         side="right"
         className="w-full sm:w-[440px] p-0 flex flex-col"
         style={{
-          background: "#ffffff",
-          borderLeft: "1.5px solid #e0d9c8",
-          boxShadow: "-4px 0 24px rgba(0,0,0,0.06)",
+          background: "rgba(8, 6, 20, 0.97)",
+          backdropFilter: "blur(32px)",
+          WebkitBackdropFilter: "blur(32px)",
+          borderLeft: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "-8px 0 64px rgba(0,0,0,0.8)",
         }}
       >
         {/* Header */}
         <SheetHeader
           className="px-5 pt-5 pb-4 flex-shrink-0"
-          style={{ borderBottom: "1px solid #f0ebe0" }}
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: "#fff4ee", border: "1.5px solid #ffd5c0" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: "rgba(255,107,53,0.15)",
+                border: "1px solid rgba(255,107,53,0.25)",
+              }}
             >
-              <Feather size={14} className="text-[#ff6b35]" />
+              <Feather size={15} className="text-[#ff6b35]" />
             </div>
             <div>
-              <SheetTitle className="text-sm font-bold text-[#1a1530]">
+              <SheetTitle className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.92)" }}>
                 Continue the story
               </SheetTitle>
-              <p className="text-[10px] text-[#8a8098]">Add your sentence to this thread</p>
+              <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                Add your sentence to this thread
+              </p>
             </div>
           </div>
         </SheetHeader>
@@ -106,9 +112,9 @@ export function BranchPanel({
               {/* Story path */}
               {ancestry.length > 1 && (
                 <div>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <BookOpen size={10} className="text-[#c8bfa8]" />
-                    <p className="text-[9px] text-[#c8bfa8] uppercase tracking-widest font-semibold">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <BookOpen size={10} style={{ color: "rgba(255,255,255,0.25)" }} />
+                    <p className="text-[9px] uppercase tracking-widest font-semibold" style={{ color: "rgba(255,255,255,0.25)" }}>
                       Story path
                     </p>
                   </div>
@@ -116,68 +122,90 @@ export function BranchPanel({
                 </div>
               )}
 
-              {/* Selected sentence card */}
+              {/* Selected sentence */}
               <div
                 className="rounded-2xl p-4"
-                style={{ background: "#faf8f4", border: "1.5px solid #e0d9c8" }}
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+                }}
               >
                 <p
-                  className="text-sm leading-[1.7] text-[#1a1530]"
-                  style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
+                  className="text-sm leading-[1.75]"
+                  style={{
+                    fontFamily: "var(--font-lora), Georgia, serif",
+                    color: "rgba(255,255,255,0.85)",
+                  }}
                 >
                   {node.body}
                 </p>
                 <div className="flex items-center gap-1.5 mt-3">
                   <Identicon svg={generateIdenticon(node.author_token)} size={14} />
-                  <span className="text-[10px] text-[#8a8098] font-medium">{node.author_name}</span>
+                  <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    {node.author_name}
+                  </span>
                 </div>
               </div>
 
               {/* Divider */}
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-[#f0ebe0]" />
-                <span className="text-[10px] text-[#c8bfa8] font-semibold uppercase tracking-wide">your turn</span>
-                <div className="flex-1 h-px bg-[#f0ebe0]" />
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+                <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.2)" }}>
+                  your turn
+                </span>
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
               </div>
 
-              {/* Cooldown or input */}
+              {/* Cooldown or compose */}
               {cooldown.onCooldown ? (
                 <CooldownTimer msRemaining={cooldown.msRemaining} formatted={cooldown.formatted} />
               ) : (
                 <div className="space-y-3">
-                  {/* Identity */}
                   {identity && (
                     <div className="flex items-center gap-2 px-1">
                       <Identicon svg={identity.identicon} size={22} />
                       <div>
-                        <p className="text-xs font-bold text-[#1a1530]">{identity.name}</p>
-                        <p className="text-[9px] text-[#8a8098]">writing anonymously</p>
+                        <p className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.85)" }}>
+                          {identity.name}
+                        </p>
+                        <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          writing anonymously
+                        </p>
                       </div>
                     </div>
                   )}
 
-                  {/* Textarea */}
-                  <Textarea
+                  <textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     placeholder="What happens next? End with . ! or ?"
-                    className="resize-none text-sm text-[#1a1530] placeholder:text-[#c8bfa8] min-h-[120px] focus-visible:ring-[#ff6b35]/30 focus-visible:border-[#ff6b35]/50"
+                    maxLength={MAX_CHARS}
+                    rows={5}
+                    className="w-full resize-none outline-none text-sm leading-[1.75] rounded-xl px-4 py-3 placeholder:opacity-25 transition-all"
                     style={{
                       fontFamily: "var(--font-lora), Georgia, serif",
-                      background: "#faf8f4",
-                      border: "1.5px solid #e0d9c8",
-                      lineHeight: "1.7",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      color: "rgba(255,255,255,0.9)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
                     }}
-                    maxLength={MAX_CHARS}
+                    onFocus={(e) => {
+                      e.currentTarget.style.border = "1px solid rgba(255,107,53,0.4)";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,107,53,0.1), inset 0 1px 0 rgba(255,255,255,0.04)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
+                      e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.04)";
+                    }}
                   />
 
-                  {/* Counter + hints */}
                   <div className="flex items-center justify-between text-[10px] px-0.5">
-                    <span className={remaining < 40 ? "text-[#ff6b35] font-semibold" : "text-[#c8bfa8]"}>
+                    <span style={{ color: remaining < 40 ? "#ff6b35" : "rgba(255,255,255,0.25)" }}>
                       {remaining} left
                     </span>
                     {charCount > 0 && !valid && (
-                      <span className="text-[#c8bfa8]">
+                      <span style={{ color: "rgba(255,255,255,0.25)" }}>
                         {charCount < MIN_CHARS
                           ? `${MIN_CHARS - charCount} more chars`
                           : "must end with . ! or ?"}
@@ -186,12 +214,18 @@ export function BranchPanel({
                   </div>
 
                   {error && (
-                    <div className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                    <div
+                      className="text-xs rounded-xl px-3 py-2"
+                      style={{
+                        color: "#fca5a5",
+                        background: "rgba(239,68,68,0.1)",
+                        border: "1px solid rgba(239,68,68,0.2)",
+                      }}
+                    >
                       {error}
                     </div>
                   )}
 
-                  {/* Submit button — with success animation */}
                   <AnimatePresence mode="wait">
                     {success ? (
                       <motion.div
@@ -200,7 +234,7 @@ export function BranchPanel({
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.8, opacity: 0 }}
                         className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold"
-                        style={{ background: "#10b981", color: "#fff" }}
+                        style={{ background: "linear-gradient(135deg, #10b981, #34d399)", color: "#fff", boxShadow: "0 4px 20px rgba(16,185,129,0.4)" }}
                       >
                         <motion.div
                           initial={{ scale: 0 }}
@@ -218,13 +252,13 @@ export function BranchPanel({
                         disabled={!valid || submitting || !identity}
                         whileHover={valid ? { scale: 1.02, y: -1 } : {}}
                         whileTap={valid ? { scale: 0.96 } : {}}
-                        className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all disabled:opacity-40"
+                        className="w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all disabled:opacity-30"
                         style={{
                           background: valid
                             ? "linear-gradient(135deg, #ff6b35, #f59e0b)"
-                            : "#f0ebe0",
-                          color: valid ? "#fff" : "#c8bfa8",
-                          boxShadow: valid ? "0 4px 16px rgba(255,107,53,0.35)" : "none",
+                            : "rgba(255,255,255,0.05)",
+                          color: valid ? "#fff" : "rgba(255,255,255,0.25)",
+                          boxShadow: valid ? "0 6px 24px rgba(255,107,53,0.4)" : "none",
                         }}
                       >
                         {submitting ? (

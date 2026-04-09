@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Feather, Heart, GripVertical } from "lucide-react";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { Feather, Heart } from "lucide-react";
 import { Identicon } from "@/components/identity/Identicon";
 import { generateIdenticon } from "@/lib/identity";
 import type { NodeWithPosition } from "@/lib/tree";
@@ -11,25 +11,19 @@ export const NODE_WIDTH = 230;
 export const NODE_HEIGHT = 210;
 
 const PALETTE = [
-  { bg: "#FFDE5C", pin: "#e6c400", text: "#2d2400" },
-  { bg: "#FF9D6C", pin: "#e06030", text: "#2d1000" },
-  { bg: "#FF7EB3", pin: "#d0408a", text: "#2d0020" },
-  { bg: "#B4A0FF", pin: "#7050d0", text: "#140040" },
-  { bg: "#6DD5C3", pin: "#30a898", text: "#003028" },
-  { bg: "#6BB8FF", pin: "#2878d0", text: "#001840" },
-  { bg: "#A8E063", pin: "#60a820", text: "#102000" },
+  { glow: "#FFDE5C", pin: "#e6c400", text: "#fff" },
+  { glow: "#FF9D6C", pin: "#e06030", text: "#fff" },
+  { glow: "#FF7EB3", pin: "#d0408a", text: "#fff" },
+  { glow: "#B4A0FF", pin: "#7050d0", text: "#fff" },
+  { glow: "#6DD5C3", pin: "#30a898", text: "#fff" },
+  { glow: "#6BB8FF", pin: "#2878d0", text: "#fff" },
+  { glow: "#A8E063", pin: "#60a820", text: "#fff" },
 ];
 
 function nodeColor(id: string) {
   let h = 5381;
   for (let i = 0; i < id.length; i++) h = ((h << 5) + h) ^ id.charCodeAt(i);
   return PALETTE[(h >>> 0) % PALETTE.length];
-}
-
-function nodeRotation(id: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  return (((h >>> 0) % 15) - 7) * 0.5;
 }
 
 function timeAgo(dateStr: string): string {
@@ -71,22 +65,29 @@ export function SentenceNode({
 }: SentenceNodeProps) {
   const identicon = generateIdenticon(node.author_token);
   const color = nodeColor(node.id);
-  const rotate = nodeRotation(node.id);
 
   const [hovered, setHovered] = useState(false);
   const [liking, setLiking] = useState(false);
   const [floaters, setFloaters] = useState<number[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Drag tracking via raw mouse events so it doesn't interfere with canvas pan
+  // 3D tilt via mouse position
+  const rotX = useMotionValue(0);
+  const rotY = useMotionValue(0);
+  const rotateX = useTransform(rotX, [-0.5, 0.5], [8, -8]);
+  const rotateY = useTransform(rotY, [-0.5, 0.5], [-8, 8]);
+
+  // Drag tracking
   const dragStart = useRef({ mx: 0, my: 0, nx: 0, ny: 0 });
   const wasDragged = useRef(false);
+  const isDraggingRef = useRef(false);
 
   const handleDragMouseDown = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent canvas pan
+    e.stopPropagation();
     e.preventDefault();
     wasDragged.current = false;
     dragStart.current = { mx: e.clientX, my: e.clientY, nx: posX, ny: posY };
+    isDraggingRef.current = true;
     setIsDragging(true);
 
     const onMouseMove = (ev: MouseEvent) => {
@@ -97,14 +98,17 @@ export function SentenceNode({
     };
 
     const onUp = () => {
+      isDraggingRef.current = false;
       setIsDragging(false);
+      rotX.set(0);
+      rotY.set(0);
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onUp);
     };
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onUp);
-  }, [posX, posY, zoom, onMove]);
+  }, [posX, posY, zoom, onMove, rotX, rotY]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (wasDragged.current) { wasDragged.current = false; return; }
@@ -125,10 +129,24 @@ export function SentenceNode({
     onBranch();
   }, [onBranch]);
 
+  const handleTiltMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    rotX.set((e.clientY - rect.top) / rect.height - 0.5);
+    rotY.set((e.clientX - rect.left) / rect.width - 0.5);
+  }, [rotX, rotY]);
+
+  const resetTilt = useCallback(() => {
+    rotX.set(0);
+    rotY.set(0);
+  }, [rotX, rotY]);
+
   const showActions = hovered && !isDragging;
 
+  // Glow intensity based on votes
+  const glowOpacity = Math.min(0.5, 0.15 + node.votes * 0.05);
+
   return (
-    // Outer wrapper covers card + button area — hover state tracks the whole region
     <div
       data-node="true"
       style={{
@@ -136,49 +154,74 @@ export function SentenceNode({
         left: posX,
         top: posY,
         width: NODE_WIDTH,
-        // Tall enough to include the action row below
-        paddingBottom: 52,
+        paddingBottom: 56,
         zIndex: isDragging ? 200 : isSelected ? 20 : hovered ? 100 : 1,
+        perspective: "600px",
       }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); resetTilt(); }}
     >
-      {/* Animated card */}
+      {/* Ambient glow behind card */}
+      <div
+        style={{
+          position: "absolute",
+          inset: -20,
+          borderRadius: 32,
+          background: `radial-gradient(ellipse at center, ${color.glow}${Math.round(glowOpacity * 255).toString(16).padStart(2, "0")} 0%, transparent 70%)`,
+          pointerEvents: "none",
+          transition: "opacity 0.3s",
+          opacity: hovered || isSelected ? 1 : 0.6,
+          filter: "blur(8px)",
+        }}
+      />
+
+      {/* 3D tilting card */}
       <motion.div
-        initial={isNew ? { scale: 0, rotate: rotate - 10, opacity: 0, y: -20 } : false}
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
+          cursor: isDragging ? "grabbing" : "grab",
+        }}
+        initial={isNew ? { scale: 0, opacity: 0, y: -30 } : false}
         animate={{
-          scale: isSelected ? 1.06 : isDragging ? 1.04 : 1,
-          rotate: isSelected || isDragging ? 0 : rotate,
+          scale: isSelected ? 1.05 : isDragging ? 1.03 : 1,
           opacity: 1,
           y: 0,
         }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        style={{
-          position: "relative",
-          cursor: isDragging ? "grabbing" : "grab",
-        }}
+        transition={{ type: "spring", stiffness: 300, damping: 22 }}
+        onMouseMove={handleTiltMove}
         onClick={handleClick}
         onMouseDown={handleDragMouseDown}
       >
         {/* Push pin */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 -top-4 z-10 flex flex-col items-center pointer-events-none"
-        >
-          <div
-            className="w-5 h-5 rounded-full shadow-md border-2 border-white"
-            style={{ background: isOwn ? "#ff6b35" : color.pin }}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-4 z-10 flex flex-col items-center pointer-events-none">
+          <motion.div
+            animate={isNew ? { scale: [1, 1.4, 1] } : {}}
+            transition={{ duration: 0.4 }}
+            className="w-5 h-5 rounded-full border-2 shadow-lg"
+            style={{
+              background: isOwn
+                ? "linear-gradient(135deg, #ff6b35, #f59e0b)"
+                : color.glow,
+              borderColor: "rgba(255,255,255,0.2)",
+              boxShadow: `0 0 12px ${color.glow}80`,
+            }}
           />
-          <div className="w-0.5 h-3" style={{ background: color.pin + "88" }} />
+          <div
+            className="w-0.5 h-3"
+            style={{ background: `linear-gradient(to bottom, ${color.glow}88, transparent)` }}
+          />
         </div>
 
-        {/* New pulse */}
+        {/* Pulse ring for new nodes */}
         {isNew && (
           <motion.div
-            initial={{ scale: 1, opacity: 0.7 }}
-            animate={{ scale: 1.5, opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            initial={{ scale: 1, opacity: 0.8 }}
+            animate={{ scale: 1.6, opacity: 0 }}
+            transition={{ duration: 0.9 }}
             className="absolute inset-0 rounded-2xl pointer-events-none"
-            style={{ border: `3px solid ${color.bg}` }}
+            style={{ border: `2px solid ${color.glow}` }}
           />
         )}
 
@@ -186,22 +229,33 @@ export function SentenceNode({
         <div
           className="rounded-2xl flex flex-col overflow-hidden"
           style={{
-            background: color.bg,
+            background: "rgba(8, 6, 22, 0.88)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: `1px solid ${color.glow}40`,
             boxShadow: isSelected
-              ? `0 0 0 3px #1a1530, 0 16px 48px rgba(0,0,0,0.22)`
+              ? `0 0 0 2px ${color.glow}, 0 24px 64px rgba(0,0,0,0.8), 0 0 80px ${color.glow}30, inset 0 1px 0 rgba(255,255,255,0.1)`
               : isDragging
-              ? `0 20px 60px rgba(0,0,0,0.25)`
-              : `0 6px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.06)`,
+              ? `0 24px 64px rgba(0,0,0,0.7), 0 0 50px ${color.glow}20, inset 0 1px 0 rgba(255,255,255,0.08)`
+              : `0 0 0 1px ${color.glow}20, 0 8px 32px rgba(0,0,0,0.6), 0 0 50px ${color.glow}10, inset 0 1px 0 rgba(255,255,255,0.06)`,
             minHeight: NODE_HEIGHT,
           }}
         >
-          {/* Drag grip + own badge */}
-          <div className="flex items-center justify-between px-3 pt-2 pointer-events-none">
-            <GripVertical size={12} style={{ color: color.text + "44" }} />
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-3 pt-2.5 pointer-events-none">
+            <div className="flex gap-0.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: `${color.glow}60` }} />
+              <div className="w-2 h-2 rounded-full" style={{ background: `${color.glow}30` }} />
+              <div className="w-2 h-2 rounded-full" style={{ background: `${color.glow}15` }} />
+            </div>
             {isOwn && (
               <span
-                className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ background: "rgba(0,0,0,0.12)", color: color.text }}
+                className="text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider"
+                style={{
+                  background: `${color.glow}20`,
+                  color: color.glow,
+                  border: `1px solid ${color.glow}40`,
+                }}
               >
                 you
               </span>
@@ -209,13 +263,13 @@ export function SentenceNode({
           </div>
 
           {/* Text */}
-          <div className="px-4 pb-3 flex-1">
+          <div className="px-4 pb-3 pt-2 flex-1">
             <p
-              className="text-[13px] leading-[1.7]"
+              className="text-[13px] leading-[1.75]"
               style={{
                 fontFamily: "var(--font-lora), Georgia, serif",
-                color: color.text,
-                fontWeight: 500,
+                color: "rgba(255,255,255,0.92)",
+                fontWeight: 400,
               }}
             >
               {node.body}
@@ -225,19 +279,25 @@ export function SentenceNode({
           {/* Footer */}
           <div
             className="px-4 py-2.5 flex items-center justify-between"
-            style={{ borderTop: `1px solid rgba(0,0,0,0.07)` }}
+            style={{ borderTop: `1px solid rgba(255,255,255,0.06)` }}
           >
             <div className="flex items-center gap-1.5 min-w-0 pointer-events-none">
               <Identicon svg={identicon} size={14} />
-              <span className="text-[10px] font-semibold truncate max-w-[80px]" style={{ color: color.text + "aa" }}>
+              <span
+                className="text-[10px] font-semibold truncate max-w-[80px]"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+              >
                 {node.author_name}
               </span>
-              <span className="text-[9px]" style={{ color: color.text + "55" }}>
+              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.2)" }}>
                 · {timeAgo(node.created_at)}
               </span>
             </div>
             {node.votes > 0 && (
-              <div className="flex items-center gap-0.5 text-[10px] font-bold pointer-events-none" style={{ color: color.text + "88" }}>
+              <div
+                className="flex items-center gap-0.5 text-[10px] font-bold pointer-events-none"
+                style={{ color: color.glow }}
+              >
                 <Heart size={9} fill="currentColor" />
                 {node.votes}
               </div>
@@ -246,27 +306,37 @@ export function SentenceNode({
         </div>
       </motion.div>
 
-      {/* Action buttons — INSIDE the wrapper so hover state is preserved */}
+      {/* Action buttons */}
       <AnimatePresence>
         {showActions && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
-            className="flex items-center justify-center gap-2 mt-2"
+            initial={{ opacity: 0, y: -6, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-center gap-2 mt-2.5"
           >
             {/* Like */}
             <motion.button
               onMouseDown={(e) => e.stopPropagation()}
               onClick={handleVote}
-              whileTap={{ scale: 0.85 }}
+              whileHover={{ scale: 1.08, y: -1 }}
+              whileTap={{ scale: 0.88 }}
               animate={liking ? { scale: [1, 1.5, 0.9, 1.15, 1] } : { scale: 1 }}
               transition={{ duration: 0.4 }}
-              className="relative flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-full shadow-md"
-              style={{ background: "#fff", color: "#5a5070", border: "1.5px solid #e0d9c8" }}
+              className="relative flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                color: "rgba(255,255,255,0.8)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(12px)",
+              }}
             >
-              <Heart size={11} fill={node.votes > 0 ? "#ff6b35" : "none"} stroke={node.votes > 0 ? "#ff6b35" : "currentColor"} />
+              <Heart
+                size={11}
+                fill={node.votes > 0 ? color.glow : "none"}
+                stroke={node.votes > 0 ? color.glow : "currentColor"}
+              />
               {node.votes > 0 ? node.votes : "Like"}
 
               <AnimatePresence>
@@ -274,11 +344,12 @@ export function SentenceNode({
                   <motion.span
                     key={k}
                     initial={{ opacity: 1, y: 0, x: "-50%" }}
-                    animate={{ opacity: 0, y: -30, x: "-50%" }}
+                    animate={{ opacity: 0, y: -32, x: "-50%" }}
                     exit={{}}
                     transition={{ duration: 0.7 }}
                     onAnimationComplete={() => setFloaters((f) => f.filter((x) => x !== k))}
-                    className="absolute -top-6 left-1/2 text-xs font-black pointer-events-none text-[#ff6b35] whitespace-nowrap"
+                    className="absolute -top-7 left-1/2 text-xs font-black pointer-events-none whitespace-nowrap"
+                    style={{ color: color.glow }}
                   >
                     +1 ♥
                   </motion.span>
@@ -290,13 +361,13 @@ export function SentenceNode({
             <motion.button
               onMouseDown={(e) => e.stopPropagation()}
               onClick={handleBranch}
-              whileHover={{ scale: 1.06, y: -1 }}
-              whileTap={{ scale: 0.93 }}
-              className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md"
+              whileHover={{ scale: 1.08, y: -1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
               style={{
                 background: "linear-gradient(135deg, #ff6b35, #f59e0b)",
                 color: "#fff",
-                boxShadow: "0 3px 12px rgba(255,107,53,0.4)",
+                boxShadow: "0 4px 16px rgba(255,107,53,0.5)",
               }}
             >
               <Feather size={11} />

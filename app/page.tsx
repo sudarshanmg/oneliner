@@ -28,7 +28,6 @@ export default function WorldPage() {
   const [newNodeIds, setNewNodeIds] = useState<Set<string>>(new Set());
   const [centerKey, setCenterKey] = useState(0);
 
-  // Begin-world state
   const [beginBody, setBeginBody] = useState("");
   const [beginSubmitting, setBeginSubmitting] = useState(false);
   const [beginError, setBeginError] = useState<string | null>(null);
@@ -112,82 +111,95 @@ export default function WorldPage() {
   const isEmpty = !loading && nodeMap.size === 0;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ background: "#f7f3e9" }}>
+    <div className="flex flex-col h-screen overflow-hidden" style={{ background: "#060410" }}>
       {/* Nav */}
       <nav
-        className="flex items-center justify-between px-5 py-2.5 flex-shrink-0 z-20"
+        className="flex items-center justify-between px-5 py-3 flex-shrink-0 z-20"
         style={{
-          background: "#ffffff",
-          borderBottom: "1.5px solid #e0d9c8",
-          boxShadow: "0 1px 8px rgba(0,0,0,0.04)",
+          background: "rgba(6,4,16,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4)",
         }}
       >
         <div className="flex items-center gap-3">
-            <Link href="/about" className="flex items-center gap-2 group">
+          <Link href="/about" className="flex items-center gap-2.5 group">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: "#fff4ee", border: "1.5px solid #ffd5c0" }}
+              style={{
+                background: "rgba(255,107,53,0.15)",
+                border: "1px solid rgba(255,107,53,0.3)",
+              }}
             >
               <BookOpen size={14} className="text-[#ff6b35]" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-[#1a1530] leading-none group-hover:text-[#ff6b35] transition-colors">
-                One-Sentence <span className="text-[#ff6b35]">MMO</span>
+              <h1 className="text-sm font-bold leading-none gradient-text group-hover:opacity-80 transition-opacity">
+                One-Sentence MMO
               </h1>
-              <p className="text-[9px] text-[#c8bfa8] leading-none mt-0.5">
+              <p className="text-[9px] leading-none mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>
                 A living story · one voice at a time
               </p>
             </div>
           </Link>
 
           {nodeMap.size > 0 && (
-            <div
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
               className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold"
               style={{
-                background: "#fff4ee",
+                background: "rgba(255,107,53,0.12)",
                 color: "#ff6b35",
-                border: "1px solid #ffd5c0",
+                border: "1px solid rgba(255,107,53,0.2)",
               }}
             >
               <Sparkles size={8} />
               {nodeMap.size} sentences
-            </div>
+            </motion.div>
           )}
         </div>
 
         <div className="flex items-center gap-2">
           <Link
             href="/narrator"
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all hover:shadow-sm"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all hover:bg-white/10"
             style={{
-              background: "#faf8f4",
-              color: "#5a5070",
-              border: "1.5px solid #e0d9c8",
+              background: "rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.65)",
+              border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <Scroll size={12} className="text-[#f59e0b]" />
+            <Scroll size={12} style={{ color: "#f59e0b" }} />
             Chronicle
           </Link>
+
           <Link
             href="/about"
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all hover:shadow-sm"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all hover:bg-white/10"
             style={{
-              background: "#faf8f4",
-              color: "#5a5070",
-              border: "1.5px solid #e0d9c8",
+              background: "rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.65)",
+              border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <Compass size={12} className="text-[#6BB8FF]" />
+            <Compass size={12} style={{ color: "#6BB8FF" }} />
             About
           </Link>
 
           {identity && (
             <div
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-              style={{ background: "#faf8f4", border: "1.5px solid #e0d9c8" }}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
             >
               <Identicon svg={identity.identicon} size={18} />
-              <span className="text-xs font-semibold text-[#5a5070]">{identity.name}</span>
+              <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                {identity.name}
+              </span>
             </div>
           )}
         </div>
@@ -204,60 +216,99 @@ export default function WorldPage() {
               exit={{ opacity: 0 }}
               className="canvas-bg absolute inset-0 flex items-center justify-center"
             >
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-3 border-[#ff6b35] border-t-transparent animate-spin" />
-                <p className="text-sm font-medium text-[#8a8098]">Loading the world…</p>
+              {/* Aurora for loading state */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="aurora-a absolute rounded-full" style={{ width: "60vw", height: "50vh", top: "-10vh", left: "-10vw", background: "radial-gradient(ellipse, rgba(255,107,53,0.07) 0%, transparent 65%)", filter: "blur(60px)" }} />
+                <div className="aurora-b absolute rounded-full" style={{ width: "50vw", height: "45vh", bottom: "-10vh", right: "-10vw", background: "radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 65%)", filter: "blur(60px)" }} />
+              </div>
+              <div className="relative flex flex-col items-center gap-4">
+                <div className="relative w-12 h-12">
+                  <div className="absolute inset-0 rounded-full border-2 border-[#ff6b35]/20" />
+                  <div className="absolute inset-0 rounded-full border-2 border-t-[#ff6b35] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  <div className="absolute inset-2 rounded-full" style={{ background: "rgba(255,107,53,0.1)" }} />
+                </div>
+                <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  Loading the world…
+                </p>
               </div>
             </motion.div>
 
           ) : isEmpty ? (
             <motion.div
               key="empty"
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="canvas-bg absolute inset-0 flex items-center justify-center p-6"
             >
-              <div className="w-full max-w-lg space-y-6 text-center">
-                {/* Floating icons */}
+              {/* Aurora */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="aurora-a absolute rounded-full" style={{ width: "70vw", height: "60vh", top: "-20vh", left: "-15vw", background: "radial-gradient(ellipse, rgba(255,107,53,0.08) 0%, transparent 65%)", filter: "blur(60px)" }} />
+                <div className="aurora-b absolute rounded-full" style={{ width: "60vw", height: "55vh", bottom: "-20vh", right: "-10vw", background: "radial-gradient(ellipse, rgba(139,92,246,0.08) 0%, transparent 65%)", filter: "blur(60px)" }} />
+                <div className="aurora-c absolute rounded-full" style={{ width: "50vw", height: "40vh", top: "30%", left: "20%", background: "radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 65%)", filter: "blur(60px)" }} />
+              </div>
+
+              <div className="relative w-full max-w-lg space-y-8 text-center">
+                {/* Floating orbs */}
                 <div className="flex justify-center gap-3">
-                  {["#FFDE5C", "#FF7EB3", "#6BB8FF", "#A8E063", "#B4A0FF"].map((c, i) => (
+                  {[
+                    { c: "#FFDE5C", e: "✨" },
+                    { c: "#FF7EB3", e: "🌟" },
+                    { c: "#6BB8FF", e: "⚡" },
+                    { c: "#A8E063", e: "🌿" },
+                    { c: "#B4A0FF", e: "🔮" },
+                  ].map(({ c, e }, i) => (
                     <motion.div
                       key={c}
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 2, delay: i * 0.2, repeat: Infinity, ease: "easeInOut" }}
-                      className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-md"
-                      style={{ background: c }}
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ duration: 2.2, delay: i * 0.22, repeat: Infinity, ease: "easeInOut" }}
+                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-lg"
+                      style={{
+                        background: `${c}15`,
+                        border: `1px solid ${c}40`,
+                        boxShadow: `0 0 24px ${c}25`,
+                        backdropFilter: "blur(8px)",
+                      }}
                     >
-                      {["✨", "🌟", "⚡", "🌿", "🔮"][i]}
+                      {e}
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <h2
-                    className="text-4xl font-bold shimmer-text"
+                    className="text-5xl font-black shimmer-text"
                     style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
                   >
                     The world awaits.
                   </h2>
-                  <p className="text-sm text-[#8a8098] leading-relaxed">
-                    No story exists here yet. You hold the quill.<br />
+                  <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    No story exists yet. You hold the quill.<br />
                     Write the first sentence and kindle this world.
                   </p>
                 </div>
 
                 {/* Input card */}
                 <div
-                  className="rounded-3xl p-5 text-left space-y-3 shadow-xl"
-                  style={{ background: "#fff", border: "2px solid #e0d9c8" }}
+                  className="rounded-3xl p-5 text-left space-y-4"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    backdropFilter: "blur(24px)",
+                    WebkitBackdropFilter: "blur(24px)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    boxShadow: "0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
+                  }}
                 >
                   {identity && (
                     <div className="flex items-center gap-2">
                       <Identicon svg={identity.identicon} size={22} />
                       <div>
-                        <p className="text-xs font-bold text-[#1a1530]">{identity.name}</p>
-                        <p className="text-[9px] text-[#c8bfa8]">first author of this world</p>
+                        <p className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.9)" }}>
+                          {identity.name}
+                        </p>
+                        <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          first author of this world
+                        </p>
                       </div>
                     </div>
                   )}
@@ -268,13 +319,18 @@ export default function WorldPage() {
                     placeholder="Once upon a time, in a land no map had dared to draw…"
                     maxLength={MAX_CHARS}
                     rows={4}
-                    className="w-full bg-transparent text-sm leading-[1.8] resize-none outline-none text-[#1a1530] placeholder:text-[#c8bfa8]"
-                    style={{ fontFamily: "var(--font-lora), Georgia, serif" }}
+                    className="w-full bg-transparent text-sm leading-[1.8] resize-none outline-none placeholder:opacity-25"
+                    style={{
+                      fontFamily: "var(--font-lora), Georgia, serif",
+                      color: "rgba(255,255,255,0.9)",
+                    }}
                   />
 
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-[#c8bfa8]">{MAX_CHARS - beginBody.length} chars left · end with . ! ?</span>
-                    {beginError && <span className="text-red-500 font-medium">{beginError}</span>}
+                    <span style={{ color: "rgba(255,255,255,0.25)" }}>
+                      {MAX_CHARS - beginBody.length} chars left · end with . ! ?
+                    </span>
+                    {beginError && <span className="text-red-400 font-medium">{beginError}</span>}
                   </div>
 
                   <motion.button
@@ -282,13 +338,13 @@ export default function WorldPage() {
                     disabled={!isValid(beginBody) || beginSubmitting || !identity}
                     whileHover={isValid(beginBody) ? { scale: 1.02, y: -1 } : {}}
                     whileTap={isValid(beginBody) ? { scale: 0.97 } : {}}
-                    className="w-full h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                    className="w-full h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-30"
                     style={{
                       background: isValid(beginBody)
                         ? "linear-gradient(135deg, #ff6b35, #f59e0b)"
-                        : "#f0ebe0",
-                      color: isValid(beginBody) ? "#fff" : "#c8bfa8",
-                      boxShadow: isValid(beginBody) ? "0 6px 24px rgba(255,107,53,0.4)" : "none",
+                        : "rgba(255,255,255,0.06)",
+                      color: isValid(beginBody) ? "#fff" : "rgba(255,255,255,0.3)",
+                      boxShadow: isValid(beginBody) ? "0 8px 32px rgba(255,107,53,0.45)" : "none",
                     }}
                   >
                     {beginSubmitting ? (
@@ -305,7 +361,7 @@ export default function WorldPage() {
                   </motion.button>
                 </div>
 
-                <p className="text-[10px] text-[#c8bfa8]">
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>
                   One sentence per hour · Anonymous · All voices welcome
                 </p>
               </div>
@@ -345,17 +401,20 @@ export default function WorldPage() {
       />
 
       {!loading && !isEmpty && !selectedId && (
-        <div
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium px-3 py-1.5 rounded-full pointer-events-none"
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium px-4 py-2 rounded-full pointer-events-none"
           style={{
-            color: "#8a8098",
-            background: "rgba(255,255,255,0.85)",
-            border: "1px solid #e0d9c8",
-            backdropFilter: "blur(8px)",
+            color: "rgba(255,255,255,0.35)",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(12px)",
           }}
         >
           Click any card to continue · Scroll to zoom · Drag to explore
-        </div>
+        </motion.div>
       )}
     </div>
   );

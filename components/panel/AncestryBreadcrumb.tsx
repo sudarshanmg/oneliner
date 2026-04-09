@@ -18,16 +18,21 @@ export function AncestryBreadcrumb({ path, onSelect }: AncestryBreadcrumbProps) 
         <span key={node.id} className="flex items-center gap-1">
           <button
             onClick={() => onSelect(node.id)}
-            className="text-[#8a8098] hover:text-[#ff6b35] transition-colors max-w-[110px] truncate font-medium"
+            className="max-w-[110px] truncate font-medium transition-colors"
             title={node.body}
+            style={{ color: "rgba(255,255,255,0.3)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#ff6b35")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
           >
             {node.body.slice(0, 28)}…
           </button>
-          {i < ancestors.length - 1 && <span className="text-[#c8bfa8]">›</span>}
+          {i < ancestors.length - 1 && (
+            <span style={{ color: "rgba(255,255,255,0.15)" }}>›</span>
+          )}
         </span>
       ))}
-      <span className="text-[#c8bfa8]">›</span>
-      <span className="text-[#ff6b35] font-semibold">this</span>
+      <span style={{ color: "rgba(255,255,255,0.15)" }}>›</span>
+      <span className="font-semibold" style={{ color: "#ff6b35" }}>this</span>
     </div>
   );
 }
